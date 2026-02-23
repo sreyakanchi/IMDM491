@@ -1,0 +1,128 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: #0a0806;
+    overflow: hidden;
+    font-family: 'Palatino Linotype', Palatino, serif;
+    cursor: none;
+  }
+
+  #canvas-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  canvas { display: block; }
+
+  .ui-overlay {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 28px;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .title {
+    font-size: 11px;
+    letter-spacing: 0.45em;
+    color: rgba(180, 145, 90, 0.55);
+    text-transform: uppercase;
+  }
+
+  .controls {
+    display: flex;
+    gap: 20px;
+    pointer-events: all;
+  }
+
+  .btn {
+    background: transparent;
+    border: 1px solid rgba(140, 100, 55, 0.4);
+    color: rgba(200, 165, 105, 0.7);
+    font-family: 'Palatino Linotype', Palatino, serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    padding: 8px 20px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(140, 90, 30, 0.15);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+    transform-origin: left;
+  }
+
+  .btn:hover::before { transform: scaleX(1); }
+  .btn:hover { color: rgba(220, 185, 120, 1); border-color: rgba(160, 120, 65, 0.7); }
+
+  .corner-ornament {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    opacity: 0.2;
+  }
+  .corner-ornament.tl { top: 16px; left: 16px; border-top: 1px solid #8b6535; border-left: 1px solid #8b6535; }
+  .corner-ornament.tr { top: 16px; right: 16px; border-top: 1px solid #8b6535; border-right: 1px solid #8b6535; }
+  .corner-ornament.bl { bottom: 90px; left: 16px; border-bottom: 1px solid #8b6535; border-left: 1px solid #8b6535; }
+  .corner-ornament.br { bottom: 90px; right: 16px; border-bottom: 1px solid #8b6535; border-right: 1px solid #8b6535; }
+
+  #cursor {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(180, 130, 60, 0.6);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease;
+    mix-blend-mode: screen;
+  }
+
+  #fog-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(5,4,3,0.65) 100%);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .grain {
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    opacity: 0.045;
+    pointer-events: none;
+    z-index: 6;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    animation: grain 0.8s steps(1) infinite;
+  }
+
+  @keyframes grain {
+    0%,100%{transform:translate(0,0)}
+    10%{transform:translate(-2%,-2%)}
+    20%{transform:translate(2%,2%)}
+    30%{transform:translate(-1%,1%)}
+    40%{transform:translate(1%,-1%)}
+    50%{transform:translate(-2%,2%)}
+    60%{transform:translate(2%,-2%)}
+    70%{transform:translate(-1%,-1%)}
+    80%{transform:translate(1%,1%)}
+    90%{transform:translate(-2%,1%)}
+  }
