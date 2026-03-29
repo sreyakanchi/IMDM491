@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Box</title>
+
+  <style>
+    /* ── Reset & Layout ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #0d0d14;
+    }
+
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ── Loading Indicator ──────────────────────────────────────── */
+    #loading {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffffff;
+      font-family: system-ui, sans-serif;
+      font-size: 0.875rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 1;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+
+    #loading.hidden { opacity: 0; }
+  </style>
+
+  <!-- ── Import Map ────────────────────────────────────────────── -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@latest/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <div id="loading">Loading…</div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader }     from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls }  from 'three/addons/controls/OrbitControls.js';
+
+    /* ── Renderer ───────────────────────────────────────────────── */
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace   = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+
+    /* ── Scene ──────────────────────────────────────────────────── */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#0d0d14');
+
+    /* ── Camera ─────────────────────────────────────────────────── */
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 3, 6);
+    camera.lookAt(0, 0, 0);
+
+    /* ── Orbit Controls ─────────────────────────────────────────── */
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 1, 0);
+    controls.update();
+
+    /* ── Lighting ───────────────────────────────────────────────── */
+
+    // Ambient — very dark blue-black base
+    const ambientLight = new THREE.AmbientLight('#111827', 0.2);
+    scene.add(ambientLight);
+
+    // Key light — cool blue-white, casts shadows
+    const keyLight = new THREE.DirectionalLight('#c8d8ff', 0.8);
+    keyLight.position.set(-5, 8, 3);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far  = 30;
+    keyLight.shadow.camera.left   = -8;
+    keyLight.shadow.camera.right  =  8;
+    keyLight.shadow.camera.top    =  8;
+    keyLight.shadow.camera.bottom = -8;
+    scene.add(keyLight);
+
+    // Fill light — deep violet, no shadows
+    const fillLight = new THREE.DirectionalLight('#1a0a2e', 0.4);
+    fillLight.position.set(5, 2, -3);
+    fillLight.castShadow = false;
+    scene.add(fillLight);
+
+    /* ── Ground Plane ───────────────────────────────────────────── */
+    // Thin circular disc — dark polished floor with subtle metallic reflection
+    const groundGeo = new THREE.CircleGeometry(6, 64);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color:     '#0a0a0a',
+      roughness: 0.05,
+      metalness: 0.8,
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;   // lay flat
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    /* ── GLB Loader ─────────────────────────────────────────────── */
+    const loadingEl = document.getElementById('loading');
+    const loader    = new GLTFLoader();
+
+    loader.load(
+      './assets/music_box.glb',
+
+      /* onLoad */
+      (gltf) => {
+        const model = gltf.scene;
+
+        // Center model using bounding box
+        const box    = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);           // shift so bbox center is origin
+        model.position.y -= box.min.y;        // sit flush on ground plane
+
+        // Enable shadows on every mesh; log all object names
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow    = true;
+            child.receiveShadow = true;
+          }
+          console.log('[scene object]', child.name || '(unnamed)', child.type);
+        });
+
+        scene.add(model);
+
+        // Fade out loading indicator
+        loadingEl.classList.add('hidden');
+        loadingEl.addEventListener('transitionend', () => loadingEl.remove(), { once: true });
+      },
+
+      /* onProgress */
+      (xhr) => {
+        if (xhr.lengthComputable) {
+          const pct = Math.round((xhr.loaded / xhr.total) * 100);
+          loadingEl.textContent = `Loading… ${pct}%`;
+        }
+      },
+
+      /* onError */
+      (err) => {
+        console.error('GLTFLoader error:', err);
+        loadingEl.textContent = 'Failed to load model.';
+      }
+    );
+
+    /* ── Resize Handler ─────────────────────────────────────────── */
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    /* ── Render Loop ────────────────────────────────────────────── */
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();        // required for damping
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
