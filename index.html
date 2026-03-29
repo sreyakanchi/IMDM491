@@ -84,11 +84,16 @@
 
     /* ── Orbit Controls ─────────────────────────────────────────── */
     const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.7, 0);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.target.set(0, 1, 0);
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4;
+    controls.maxDistance = 20;
+    controls.minPolarAngle = Math.PI * 0.1;   // can't go too high
+    controls.maxPolarAngle = Math.PI * 0.72;  // can't clip through ground
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.35;
     controls.update();
-
     /* ── Lighting ───────────────────────────────────────────────── */
 
     // Ambient — very dark blue-black base
