@@ -39,12 +39,6 @@ controls.update();
 const ambientLight = new THREE.AmbientLight(0x1a1008, 100.2);
 scene.add(ambientLight);
 
-// Candle-like warm point light inside box
-const innerLight = new THREE.PointLight(0xd4820a, 2.5, 6);
-innerLight.position.set(0, 1.2, 0);
-innerLight.castShadow = true;
-scene.add(innerLight);
-
 // Eerie green-tinted rim light
 const rimLight = new THREE.DirectionalLight(0x3a5c2a, 0.5);
 rimLight.position.set(-4, 5, -4);
@@ -56,205 +50,6 @@ moonLight.position.set(2, 8, 2);
 moonLight.castShadow = true;
 moonLight.shadow.mapSize.set(1024, 1024);
 scene.add(moonLight);
-
-// ─── Materials ──────────────────────────────────────────────────────────────
-const woodMat = new THREE.MeshStandardMaterial({
-  color: 0x3d2010,
-  roughness: 0.85,
-  metalness: 0.05,
-});
-const darkWoodMat = new THREE.MeshStandardMaterial({
-  color: 0x1e0f06,
-  roughness: 0.9,
-  metalness: 0.02,
-});
-const brassMat = new THREE.MeshStandardMaterial({
-  color: 0x7a5c20,
-  roughness: 0.35,
-  metalness: 0.9,
-  emissive: 0x2a1a00,
-  emissiveIntensity: 0.3,
-});
-const velvetMat = new THREE.MeshStandardMaterial({
-  color: 0x1a0a0a,
-  roughness: 1,
-  metalness: 0,
-});
-const mirrorMat = new THREE.MeshStandardMaterial({
-  color: 0x8899aa,
-  roughness: 0.15,
-  metalness: 0.95,
-  envMapIntensity: 1,
-});
-
-// ─── Geometry Helpers ────────────────────────────────────────────────────────
-function box(w, h, d, mat, x = 0, y = 0, z = 0) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  m.position.set(x, y, z);
-  m.castShadow = true;
-  m.receiveShadow = true;
-  return m;
-}
-
-// ─── Music Box Group ─────────────────────────────────────────────────────────
-const boxGroup = new THREE.Group();
-scene.add(boxGroup);
-
-// Base
-const base = box(4, 0.22, 3, darkWoodMat, 0, 0, 0);
-boxGroup.add(base);
-
-// Walls
-const wallFront = box(4, 1.5, 0.12, woodMat, 0, 0.75 + 0.11, 1.5);
-const wallBack  = box(4, 1.5, 0.12, woodMat, 0, 0.75 + 0.11, -1.5);
-const wallLeft  = box(0.12, 1.5, 3, woodMat, -2, 0.75 + 0.11, 0);
-const wallRight = box(0.12, 1.5, 3, woodMat,  2, 0.75 + 0.11, 0);
-[wallFront, wallBack, wallLeft, wallRight].forEach(w => boxGroup.add(w));
-
-// Floor inside
-const innerFloor = box(3.76, 0.06, 2.76, velvetMat, 0, 0.14, 0);
-boxGroup.add(innerFloor);
-
-// Brass corner inlays
-const corners = [[-1.9, 0.14, 1.4], [1.9, 0.14, 1.4], [-1.9, 0.14, -1.4], [1.9, 0.14, -1.4]];
-corners.forEach(([x, y, z]) => {
-  const b = box(0.15, 0.12, 0.15, brassMat, x, y, z);
-  boxGroup.add(b);
-});
-
-// Brass trim strips on top edge of walls
-const trimPositions = [
-  [0,  1.62,  1.5, 4, 0.06, 0.12],
-  [0,  1.62, -1.5, 4, 0.06, 0.12],
-  [-2, 1.62,  0,   0.12, 0.06, 3],
-  [ 2, 1.62,  0,   0.12, 0.06, 3],
-];
-trimPositions.forEach(([x, y, z, w, h, d]) => {
-  const t = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), brassMat);
-  t.position.set(x, y, z);
-  boxGroup.add(t);
-});
-
-// ─── Lid ─────────────────────────────────────────────────────────────────────
-const lidGroup = new THREE.Group();
-lidGroup.position.set(0, 1.65, -1.5); // hinge at back wall top
-boxGroup.add(lidGroup);
-
-const lidPanel = box(4, 0.1, 3, woodMat, 0, 0, 1.5);
-lidGroup.add(lidPanel);
-
-// Lid interior mirror-like panel (eerie)
-const lidMirror = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.6), mirrorMat);
-lidMirror.rotation.x = Math.PI / 2;
-lidMirror.position.set(0, -0.06, 1.5);
-lidGroup.add(lidMirror);
-
-// Lid brass trim
-const lidTrim = new THREE.Mesh(new THREE.BoxGeometry(4, 0.08, 3.04), brassMat);
-lidTrim.position.set(0, 0.06, 1.5);
-lidGroup.add(lidTrim);
-
-// Lid handle
-const handle = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.04, 8, 24), brassMat);
-handle.position.set(0, 0.12, 1.5);
-handle.rotation.x = Math.PI / 2;
-lidGroup.add(handle);
-
-// ─── Ballerina ───────────────────────────────────────────────────────────────
-const dancerGroup = new THREE.Group();
-dancerGroup.position.set(0, 0.22, 0.2);
-boxGroup.add(dancerGroup);
-
-const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a0d0d, roughness: 0.8 });
-
-// Body
-const body = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.13, 0.5, 8), bodyMat);
-body.position.y = 0.5;
-dancerGroup.add(body);
-
-// Head
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), bodyMat);
-head.position.y = 0.92;
-dancerGroup.add(head);
-
-// Skirt (cone)
-const skirt = new THREE.Mesh(
-  new THREE.ConeGeometry(0.32, 0.45, 12),
-  new THREE.MeshStandardMaterial({ color: 0x0d0505, roughness: 0.9, side: THREE.DoubleSide })
-);
-skirt.position.y = 0.32;
-dancerGroup.add(skirt);
-
-// Arms
-const armMat = new THREE.MeshStandardMaterial({ color: 0x1a0d0d, roughness: 0.9 });
-[-1, 1].forEach(side => {
-  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.38, 6), armMat);
-  arm.position.set(side * 0.18, 0.72, 0);
-  arm.rotation.z = side * -0.6;
-  dancerGroup.add(arm);
-});
-
-// Raised leg
-const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.32, 6), armMat);
-leg.position.set(0.15, 0.12, 0.1);
-leg.rotation.z = -0.4;
-leg.rotation.x = 0.3;
-dancerGroup.add(leg);
-
-// Platform disc
-const platform = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.28, 0.3, 0.06, 24),
-  new THREE.MeshStandardMaterial({ color: 0x7a5c20, roughness: 0.3, metalness: 0.9 })
-);
-platform.position.y = 0.05;
-dancerGroup.add(platform);
-
-// Spindle
-const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 8), brassMat);
-spindle.position.y = 0.17;
-dancerGroup.add(spindle);
-
-// ─── Music Cylinder (comb mechanism) ─────────────────────────────────────────
-const cylinderMechGroup = new THREE.Group();
-cylinderMechGroup.position.set(-0.9, 0.3, -0.5);
-boxGroup.add(cylinderMechGroup);
-
-const drumMat = new THREE.MeshStandardMaterial({ color: 0x8a7030, roughness: 0.4, metalness: 0.8 });
-const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.8, 32), drumMat);
-drum.rotation.z = Math.PI / 2;
-cylinderMechGroup.add(drum);
-
-// Pins on drum
-for (let i = 0; i < 30; i++) {
-  const angle = (i / 30) * Math.PI * 2;
-  const along = (Math.random() - 0.5) * 0.7;
-  const pin = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), brassMat);
-  pin.position.set(along, Math.sin(angle) * 0.225, Math.cos(angle) * 0.225);
-  cylinderMechGroup.add(pin);
-}
-
-// Comb tines
-for (let i = 0; i < 14; i++) {
-  const tine = new THREE.Mesh(
-    new THREE.BoxGeometry(0.015, 0.02, 0.35 + i * 0.018),
-    new THREE.MeshStandardMaterial({ color: 0xc0aa60, roughness: 0.2, metalness: 1.0 })
-  );
-  tine.position.set((i - 6.5) * 0.042, 0.28, 0.15);
-  boxGroup.add(tine);
-}
-
-// ─── Winding Key ─────────────────────────────────────────────────────────────
-const keyGroup = new THREE.Group();
-keyGroup.position.set(2, 0.5, 0.4);
-keyGroup.rotation.z = Math.PI / 2;
-boxGroup.add(keyGroup);
-
-const keyStem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.55, 8), brassMat);
-keyGroup.add(keyStem);
-
-const keyLoop = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.035, 8, 20), brassMat);
-keyLoop.position.y = 0.35;
-keyGroup.add(keyLoop);
 
 // ─── Particles / Spores ──────────────────────────────────────────────────────
 const particleCount = 280;
@@ -348,35 +143,6 @@ for (let i = 0; i < 5; i++) {
   wisps.push(wisp);
 }
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let lidOpen = false;
-let lidAngle = 0;
-let targetLidAngle = 0;
-let windPower = 0;
-let dancerAngle = 0;
-let drumAngle = 0;
-let keyWindAngle = 0;
-
-const toggleBtn = document.getElementById('toggleBtn');
-const windBtn = document.getElementById('windBtn');
-
-toggleBtn.addEventListener('click', () => {
-  lidOpen = !lidOpen;
-  targetLidAngle = lidOpen ? -Math.PI * 0.75 : 0;
-  toggleBtn.textContent = lidOpen ? 'Close Lid' : 'Open Lid';
-});
-
-windBtn.addEventListener('click', () => {
-  windPower = Math.min(windPower + 0.4, 1.5);
-});
-
-// Mouse parallax
-let mouseX = 0, mouseY = 0;
-document.addEventListener('mousemove', e => {
-  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-});
-
 // ─── Animation Loop ───────────────────────────────────────────────────────────
 const clock = new THREE.Clock();
 let t = 0;
@@ -385,30 +151,6 @@ function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
   t += delta;
-
-  // Wind down
-  windPower = Math.max(0, windPower - delta * 0.04);
-
-  // Lid animation
-  lidAngle += (targetLidAngle - lidAngle) * 0.04;
-  lidGroup.rotation.x = lidAngle;
-
-  // Dancer spins with wind power
-  const spinSpeed = windPower * 2.5;
-  dancerAngle += spinSpeed * delta;
-  dancerGroup.rotation.y = dancerAngle;
-  dancerGroup.position.y = 0.22 + Math.sin(t * 2.2) * 0.01 * windPower;
-
-  // Drum and key rotate
-  drumAngle += spinSpeed * 0.5 * delta;
-  drum.rotation.y = drumAngle;
-
-  keyWindAngle += spinSpeed * 0.8 * delta;
-  keyGroup.rotation.y = keyWindAngle;
-
-  // Flicker inner light
-  innerLight.intensity = (lidOpen ? 1 : 0.3) * (2.0 + Math.sin(t * 7.3) * 0.4 + Math.sin(t * 13.1) * 0.2);
-  innerLight.color.setHSL(0.08 + Math.sin(t * 0.5) * 0.02, 0.9, 0.45);
 
   // Will-o-wisps drift
   wisps.forEach((wisp, i) => {
@@ -434,9 +176,6 @@ function animate() {
 
   // OrbitControls — must call every frame for damping to work
   controls.update();
-
-  // Subtle box rock when winding
-  boxGroup.rotation.z = Math.sin(t * 14) * windPower * 0.008;
 
   renderer.render(scene, camera);
 }
