@@ -23,8 +23,20 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.55;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+// ─── Orbit Controls ──────────────────────────────────────────────────────────
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.7, 0);      // orbit around the music box centre
+controls.enableDamping  = true;
+controls.dampingFactor  = 0.06;
+controls.minDistance    = 4;
+controls.maxDistance    = 22;
+controls.minPolarAngle  = Math.PI * 0.1;   // can't go above the scene
+controls.maxPolarAngle  = Math.PI * 0.75;  // can't clip below the ground
+controls.autoRotate     = false;           // user controls rotation
+controls.update();
+
 // ─── Lights ─────────────────────────────────────────────────────────────────
-const ambientLight = new THREE.AmbientLight(0x1a1008, 1.2);
+const ambientLight = new THREE.AmbientLight(0x1a1008, 100.2);
 scene.add(ambientLight);
 
 // Candle-like warm point light inside box
@@ -420,10 +432,8 @@ function animate() {
   }
   pos.needsUpdate = true;
 
-  // Camera gentle parallax
-  camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.02;
-  camera.position.y += (-mouseY * 0.4 + 3.5 - camera.position.y) * 0.02;
-  camera.lookAt(0, 0.7, 0);
+  // OrbitControls — must call every frame for damping to work
+  controls.update();
 
   // Subtle box rock when winding
   boxGroup.rotation.z = Math.sin(t * 14) * windPower * 0.008;
